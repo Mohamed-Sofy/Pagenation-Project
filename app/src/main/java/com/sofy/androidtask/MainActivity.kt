@@ -5,30 +5,28 @@ import android.graphics.Color
 import android.net.ConnectivityManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.animation.AnimationUtils
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.google.android.material.snackbar.Snackbar
 import com.kaopiz.kprogresshud.KProgressHUD
 import com.sofy.androidtask.Adapter.PostAdapter
 import com.sofy.androidtask.Model.post
 import com.sofy.androidtask.Room.PostDao
 import com.sofy.androidtask.Room.Post_Database
-import com.sofy.androidtask.ViewModel.DB_ViewModel
+import com.sofy.androidtask.Room.Posts
 import com.sofy.androidtask.ViewModel.MainViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlin.concurrent.thread
 
 class MainActivity() : AppCompatActivity() {
 
     var mainviewmodel : MainViewModel? = null
-    lateinit var dbViewModel:DB_ViewModel
-    ///
 
 
     lateinit var postAdapter: PostAdapter
@@ -45,8 +43,7 @@ class MainActivity() : AppCompatActivity() {
     var PastVisableItemCount : Int =0
 
     lateinit var dialog : KProgressHUD
-    private lateinit var postDao: PostDao
-    lateinit var db :Post_Database
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,7 +51,6 @@ class MainActivity() : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         mainviewmodel = ViewModelProvider(this)[MainViewModel::class.java]
-        dbViewModel = ViewModelProviders.of(this).get(DB_ViewModel::class.java)
 
         dialog =   KProgressHUD.create(this)
             .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
@@ -66,22 +62,57 @@ class MainActivity() : AppCompatActivity() {
         layoutmanager = LinearLayoutManager(this)
         recycler.layoutManager = LinearLayoutManager(this@MainActivity)
 
-        //Create_Room_DB()
 
 
-        dialog.show()
 
         if(InternerConnection()){
+            dialog.show()
             LoadPostsByPage()
         }else{
-          //  Get_Posts_From_DB()
+            Get_Data_ROOM()
+        }
+
+    }
+
+    private fun Insert_ROOM(list :ArrayList<post>){
+
+        thread {
+            val post_list :ArrayList<Posts> = arrayListOf()
+            val db = Room.databaseBuilder(
+                applicationContext,
+                Post_Database::class.java, "database-name"
+            ).build()
+            for( i in list ){
+                post_list.add(Posts(i.id,i.userId,i.title,i.body))
+            }
+            db.postDao().deleteAllPosts()
+            db.postDao().insertAllPosts(post_list)
+        }
+
+    }
+
+    private fun Get_Data_ROOM(){
+
+        thread {
+            val post_list :ArrayList<post> = arrayListOf()
+            val db = Room.databaseBuilder(
+                applicationContext,
+                Post_Database::class.java, "database-name"
+            ).build()
+            val data :List<Posts> = db.postDao().getAllPosts()
+            Log.e("testg" , data[0].body)
+
+            for (i in data){
+                post_list.add(post(i.userId,i.id,i.title,i.body))
+            }
+            postAdapter = PostAdapter(post_list)
+            recycler.adapter = postAdapter
         }
 
     }
 
     private fun LoadPostsByPage(){
         mainviewmodel!!.getPostsList(pageId).observe(this){ post ->
-
             if(post != null){
                 loading = true
                 setUpAdapter(post)
@@ -90,22 +121,10 @@ class MainActivity() : AppCompatActivity() {
         }
     }
 
-    private fun Get_Posts_From_DB(){
-        dbViewModel.getAllPosts().observe(this , Observer { posts->
-            postAdapter = PostAdapter(posts as ArrayList<post>)
-            recycler.adapter = postAdapter
-        })
-    }
-
-    private fun Set_Posts_To_DB(list :MutableList<post>){
-            //ViewModelProvider(this)[DB_ViewModel::class.java]
-        dbViewModel.InsertAllPosts(list)
-    }
-
-
 
  private fun setUpAdapter(data: MutableList<post>) {
         if(List.size == 0){
+
             List = data
             postAdapter = PostAdapter(List as ArrayList<post>)
             recycler.adapter = postAdapter
@@ -116,7 +135,7 @@ class MainActivity() : AppCompatActivity() {
             dialog.dismiss()
 
             // Room DB
-            //Set_Posts_To_DB(data)
+            Insert_ROOM(data as ArrayList<post>)
         }else{
 
             List.addAll(data)

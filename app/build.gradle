@@ -4,6 +4,7 @@ plugins {
 }
 apply plugin: 'kotlin-kapt'
 
+
 android {
     compileSdk 31
 
@@ -67,10 +68,15 @@ dependencies {
     implementation "androidx.paging:paging-rxjava2:$paging_version"
 
     //Room
-    implementation 'androidx.room:room-ktx:2.3.0'
+  //  implementation 'androidx.room:room-ktx:2.3.0'
    // kapt "androidx.room:room-compiler:2.0.0-alpha1"
-    implementation "android.arch.lifecycle:extensions:1.1.0"
-    implementation "android.arch.lifecycle:viewmodel:1.1.0"
+  //  implementation "android.arch.lifecycle:extensions:1.1.0"
+   // implementation "android.arch.lifecycle:viewmodel:1.1.0"
+
+    //
+    def room_version = "2.2.5"
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version" // For Kotlin use kap
 
 
     //Glide

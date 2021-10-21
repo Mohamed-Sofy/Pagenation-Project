@@ -1,6 +1,7 @@
 package com.sofy.androidtask.Room
 
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -10,13 +11,13 @@ import com.sofy.androidtask.Model.post
 @Dao
 interface PostDao {
 
-    @Insert
-    fun insertAllPosts(list:MutableList<post>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAllPosts(posts_list:ArrayList<Posts>)
 
 
     @Query("SELECT * FROM post_table")
-    fun getAllPosts(): MutableList<post>
+    fun getAllPosts(): List<Posts>
 
- //   @Query("DELETE FROM post_table")
- //   suspend fun deleteAllPosts()
+    @Query("DELETE FROM post_table")
+    fun deleteAllPosts()
 }
