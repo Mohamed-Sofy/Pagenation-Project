@@ -145,17 +145,6 @@ class MainActivity() : AppCompatActivity() {
         })
     }
 
-   /* private fun Create_Room_DB(){
-         db = Room.databaseBuilder(
-            this, Post_Database, "post_database"
-        ).build()
-        postDao = db.postDao()
-
-    }*/
-
-
-
-
     fun InternerConnection(): Boolean {
 
         main_page = findViewById(R.id.main_page)
